@@ -6,9 +6,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
 
-# Import utility functions from map_tab to avoid code duplication
 from map_tab import (
-    load_and_process_data, 
+    load_and_process_data,
     calculate_global_stats,
     get_temperament,
     temperament_colors,
@@ -17,46 +16,39 @@ from map_tab import (
     temperament_descriptions
 )
 
-# Create country comparison chart for detailed analysis
+
 def create_country_comparison(df, countries, feature_type='temperament'):
     if df is None or df.empty or not countries:
-        # Return empty figure
         fig = go.Figure()
         fig.update_layout(
             title="No data available",
             height=400
         )
         return fig
-    
-    # Filter to only selected countries
+
     filtered_df = df[df['country'].isin(countries)]
-    
+
     if filtered_df.empty:
-        # Return empty figure if no countries match
         fig = go.Figure()
         fig.update_layout(
             title="Selected countries not found in dataset",
             height=400
         )
         return fig
-    
-    # Create comparison based on feature type
+
     if feature_type == 'temperament':
-        # Set up the figure
         fig = go.Figure()
-        
-        # Create temperament columns to compare
+
         temp_cols = {
             'NF': 'temperament_nf',
             'NT': 'temperament_nt',
             'SP': 'temperament_sp',
             'SJ': 'temperament_sj'
         }
-        
-        # Add a trace for each country
+
         for country in filtered_df['country'].unique():
             country_data = filtered_df[filtered_df['country'] == country].iloc[0]
-            
+
             fig.add_trace(go.Bar(
                 x=list(temp_cols.keys()),
                 y=[country_data[col] for col in temp_cols.values()],
@@ -64,11 +56,10 @@ def create_country_comparison(df, countries, feature_type='temperament'):
                 marker_color=[temperament_colors[t] for t in temp_cols.keys()],
                 opacity=0.7
             ))
-        
-        # Add global average if requested
+
         if 'global_stats' in st.session_state and 'Global Average' in countries:
             global_temps = st.session_state.global_stats['temperaments']
-            
+
             fig.add_trace(go.Bar(
                 x=list(temp_cols.keys()),
                 y=[global_temps.get(t, 0) for t in temp_cols.keys()],
@@ -77,7 +68,7 @@ def create_country_comparison(df, countries, feature_type='temperament'):
                 opacity=0.4,
                 marker_pattern_shape="x"
             ))
-        
+
         fig.update_layout(
             barmode='group',
             xaxis_title="Temperament",
@@ -93,33 +84,27 @@ def create_country_comparison(df, countries, feature_type='temperament'):
             margin=dict(l=20, r=20, t=50, b=80),
             height=500
         )
-    
+
     elif feature_type == 'personality_traits':
-        # Create a radar chart comparing E/I, N/S, T/F, J/P distributions
-        
-        # Get the average percentages for each country
+
         categories = ['Extraversion', 'Intuition', 'Thinking', 'Judging']
         fig = go.Figure()
-        
-        # For each country, calculate trait percentages
+
         for country in filtered_df['country'].unique():
             country_data = filtered_df[filtered_df['country'] == country].iloc[0]
-            
-            # Calculate trait percentages based on type distribution
+
             e_percent = 0
             n_percent = 0
             t_percent = 0
             j_percent = 0
-            
-            # Loop through all MBTI types
+
             total_percent = 0
             for col in filtered_df.columns:
                 if col.startswith('type_'):
                     type_name = col.replace('type_', '').upper()
                     percent = country_data[col]
                     total_percent += percent
-                    
-                    # Add to trait percentages
+
                     if 'E' in type_name[0]:
                         e_percent += percent
                     if 'N' in type_name[1]:
@@ -128,8 +113,7 @@ def create_country_comparison(df, countries, feature_type='temperament'):
                         t_percent += percent
                     if 'J' in type_name[3]:
                         j_percent += percent
-            
-            # Normalize if needed
+
             if total_percent > 0:
                 values = [
                     e_percent / total_percent * 100,
@@ -137,8 +121,7 @@ def create_country_comparison(df, countries, feature_type='temperament'):
                     t_percent / total_percent * 100,
                     j_percent / total_percent * 100
                 ]
-                
-                # Add opposite traits to complete the radar
+
                 categories_full = categories + ['Introversion', 'Sensing', 'Feeling', 'Perceiving']
                 values_full = values + [
                     100 - values[0],
@@ -146,14 +129,14 @@ def create_country_comparison(df, countries, feature_type='temperament'):
                     100 - values[2],
                     100 - values[3]
                 ]
-                
+
                 fig.add_trace(go.Scatterpolar(
                     r=values_full,
                     theta=categories_full,
                     fill='toself',
                     name=country
                 ))
-        
+
         fig.update_layout(
             polar=dict(
                 radialaxis=dict(
@@ -166,62 +149,49 @@ def create_country_comparison(df, countries, feature_type='temperament'):
             height=600,
             margin=dict(l=80, r=80, t=80, b=80),
         )
-    
-    else:  # Default to type comparison
-        # Create a heatmap of type distributions
-        
-        # Get the data for all countries
+
+    else:
+
         data = []
-        
-        # Add global average if requested
+
         if 'global_stats' in st.session_state and 'Global Average' in countries:
             global_types = st.session_state.global_stats['types']
-            
+
             type_row = {'country': 'Global Average'}
             for t, v in global_types.items():
                 type_row[t] = v
-            
+
             data.append(type_row)
-            
-            # Remove Global Average from countries list to avoid double processing
             countries = [c for c in countries if c != 'Global Average']
-        
-        # Add data for selected countries
+
         for country in filtered_df['country'].unique():
             country_data = filtered_df[filtered_df['country'] == country].iloc[0]
-            
-            # Create a row for this country
+
             type_row = {'country': country}
-            
-            # Add each type percentage
+
             for col in filtered_df.columns:
                 if col.startswith('type_'):
                     type_name = col.replace('type_', '').upper()
                     type_row[type_name] = country_data[col]
-            
+
             data.append(type_row)
-        
-        # Convert to DataFrame
+
         heatmap_df = pd.DataFrame(data)
-        
-        # Get ordered list of MBTI types (grouped by temperament)
+
         mbti_types = []
         for temp in ['NF', 'NT', 'SP', 'SJ']:
             mbti_types.extend(temperament_groups[temp])
-        
-        # Filter to include only types that exist in the data
+
         existing_types = [t for t in mbti_types if t in heatmap_df.columns]
-        
-        # Melt dataframe for heatmap
+
         melt_df = pd.melt(
-            heatmap_df, 
-            id_vars=['country'], 
+            heatmap_df,
+            id_vars=['country'],
             value_vars=existing_types,
-            var_name='type', 
+            var_name='type',
             value_name='percentage'
         )
-        
-        # Create heatmap
+
         fig = px.density_heatmap(
             melt_df,
             x='type',
@@ -231,43 +201,38 @@ def create_country_comparison(df, countries, feature_type='temperament'):
             category_orders={"type": existing_types},
             labels={'type': 'MBTI Type', 'percentage': 'Percentage (%)'}
         )
-        
+
         fig.update_layout(
             title="MBTI Type Distribution by Country",
             xaxis_title="MBTI Type",
             yaxis_title="Country",
-            height=400 + (len(countries) * 30),  # Scale height based on number of countries
+            height=400 + (len(countries) * 30),
             margin=dict(l=20, r=20, t=50, b=20),
         )
-        
-        # Customize to show exact values
+
         fig.update_traces(
             text=melt_df['percentage'].round(1).astype(str) + '%',
             texttemplate='%{text}',
-            textfont={'size':10}
+            textfont={'size': 10}
         )
-    
+
     return fig
 
-# Create correlation analysis for types or temperaments
+
 def create_correlation_analysis(df, analysis_type='temperament'):
     if df is None or df.empty:
-        # Return empty figure
         fig = go.Figure()
         fig.update_layout(
             title="No data available",
             height=400
         )
         return fig
-    
+
     if analysis_type == 'temperament':
-        # Calculate correlations between temperament groups
         temp_cols = ['temperament_nf', 'temperament_nt', 'temperament_sp', 'temperament_sj']
-        
-        # Create a correlation matrix
+
         corr_df = df[temp_cols].corr()
-        
-        # Create heatmap
+
         fig = go.Figure(data=go.Heatmap(
             z=corr_df.values,
             x=['NF', 'NT', 'SP', 'SJ'],
@@ -278,27 +243,23 @@ def create_correlation_analysis(df, analysis_type='temperament'):
             texttemplate='%{text}',
             colorbar=dict(title='Correlation')
         ))
-        
+
         fig.update_layout(
             title="Temperament Correlation Matrix",
             height=500,
             margin=dict(l=60, r=50, t=80, b=50),
         )
-    
-    else:  # Type correlation
-        # Get type columns
+
+    else:
         type_cols = [col for col in df.columns if col.startswith('type_')]
-        
-        if len(type_cols) > 16:  # Limit to main 16 types for clarity
+
+        if len(type_cols) > 16:
             type_cols = type_cols[:16]
-        
-        # Create correlation matrix
+
         corr_df = df[type_cols].corr()
-        
-        # Rename columns for display
+
         display_cols = [col.replace('type_', '').upper() for col in type_cols]
-        
-        # Create heatmap
+
         fig = go.Figure(data=go.Heatmap(
             z=corr_df.values,
             x=display_cols,
@@ -307,52 +268,47 @@ def create_correlation_analysis(df, analysis_type='temperament'):
             zmid=0,
             colorbar=dict(title='Correlation')
         ))
-        
+
         fig.update_layout(
             title="MBTI Type Correlation Matrix",
             height=700,
             width=700,
             margin=dict(l=60, r=50, t=80, b=50),
         )
-    
+
     return fig
 
-# Create regional analysis
+
 def create_regional_analysis(df):
     if df is None or df.empty:
-        # Return empty figure
         fig = go.Figure()
         fig.update_layout(
             title="No data available",
             height=400
         )
         return fig
-    
-    # Define regions (simplified for demonstration)
+
     regions = {
         'North America': ['United States', 'Canada', 'Mexico'],
-        'Europe': ['United Kingdom', 'Germany', 'France', 'Italy', 'Spain', 'Netherlands', 
-                  'Sweden', 'Norway', 'Finland', 'Denmark', 'Poland', 'Switzerland', 
-                  'Belgium', 'Austria', 'Portugal', 'Greece', 'Ireland'],
+        'Europe': ['United Kingdom', 'Germany', 'France', 'Italy', 'Spain', 'Netherlands',
+                   'Sweden', 'Norway', 'Finland', 'Denmark', 'Poland', 'Switzerland',
+                   'Belgium', 'Austria', 'Portugal', 'Greece', 'Ireland'],
         'East Asia': ['Japan', 'China', 'South Korea', 'Taiwan'],
         'South Asia': ['India', 'Pakistan', 'Bangladesh', 'Sri Lanka', 'Nepal'],
-        'Latin America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Venezuela', 
-                        'Ecuador', 'Cuba', 'Dominican Republic', 'Costa Rica'],
-        'Middle East': ['Turkey', 'Saudi Arabia', 'Iran', 'Israel', 'United Arab Emirates', 
-                      'Egypt', 'Iraq', 'Jordan', 'Lebanon', 'Qatar'],
-        'Africa': ['South Africa', 'Nigeria', 'Kenya', 'Morocco', 'Ghana', 'Ethiopia', 
-                  'Tanzania', 'Uganda', 'Zimbabwe', 'Algeria']
+        'Latin America': ['Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Venezuela',
+                          'Ecuador', 'Cuba', 'Dominican Republic', 'Costa Rica'],
+        'Middle East': ['Turkey', 'Saudi Arabia', 'Iran', 'Israel', 'United Arab Emirates',
+                        'Egypt', 'Iraq', 'Jordan', 'Lebanon', 'Qatar'],
+        'Africa': ['South Africa', 'Nigeria', 'Kenya', 'Morocco', 'Ghana', 'Ethiopia',
+                   'Tanzania', 'Uganda', 'Zimbabwe', 'Algeria']
     }
-    
-    # Calculate averages for each region
+
     region_data = []
-    
+
     for region, countries in regions.items():
-        # Filter to countries in this region
         region_df = df[df['country'].isin(countries)]
-        
+
         if len(region_df) > 0:
-            # Calculate temperament averages
             region_row = {
                 'region': region,
                 'country_count': len(region_df),
@@ -361,25 +317,21 @@ def create_regional_analysis(df):
                 'SP': region_df['temperament_sp'].mean(),
                 'SJ': region_df['temperament_sj'].mean()
             }
-            
+
             region_data.append(region_row)
-    
-    # Convert to DataFrame
+
     region_df = pd.DataFrame(region_data)
-    
-    # Only proceed if we have data
+
     if region_df.empty:
-        # Return empty figure
         fig = go.Figure()
         fig.update_layout(
             title="No regional data available",
             height=400
         )
         return fig
-    
-    # Create a grouped bar chart
+
     fig = go.Figure()
-    
+
     for temp in ['NF', 'NT', 'SP', 'SJ']:
         fig.add_trace(go.Bar(
             x=region_df['region'],
@@ -387,7 +339,7 @@ def create_regional_analysis(df):
             name=temp,
             marker_color=temperament_colors[temp]
         ))
-    
+
     fig.update_layout(
         barmode='group',
         title="Temperament Distribution by Region",
@@ -397,8 +349,7 @@ def create_regional_analysis(df):
         height=500,
         margin=dict(l=60, r=50, t=80, b=50),
     )
-    
-    # Add annotation about sample sizes
+
     for i, row in region_df.iterrows():
         fig.add_annotation(
             x=row['region'],
@@ -407,165 +358,147 @@ def create_regional_analysis(df):
             showarrow=False,
             font=dict(size=10)
         )
-    
+
     return fig
 
-# Main function to show the analysis tab
+
 def show_analysis_tab():
     st.markdown("<div class='dashboard-card'>", unsafe_allow_html=True)
     st.markdown("<div class='card-title'>MBTI Data Analysis</div>", unsafe_allow_html=True)
-    
-    # Define file paths - these should be adjusted based on your project structure
+
     countries_file = 'data/countries.csv'
     types_file = 'data/types.csv'
-    
-    # Check if data is already loaded in session state
+
     if 'df' not in st.session_state or 'types_info' not in st.session_state:
-        # Load data
         with st.spinner("Loading data..."):
             df, types_info = load_and_process_data(countries_file, types_file)
-            
+
             if df is None or types_info is None:
                 st.error("Failed to load data. Please ensure the CSV files are in the correct location.")
                 return
-            
-            # Calculate global statistics
+
             global_stats = calculate_global_stats(df)
-            
-            # Store in session state
+
             st.session_state.df = df
             st.session_state.types_info = types_info
             st.session_state.global_stats = global_stats
     else:
-        # Use data from session state
         df = st.session_state.df
         types_info = st.session_state.types_info
         global_stats = st.session_state.global_stats
-    
-    # Create analysis options
+
     analysis_type = st.radio(
         "Select Analysis Type:",
         ["Country Comparison", "Correlation Analysis", "Regional Trends"],
         horizontal=True
     )
-    
+
     if analysis_type == "Country Comparison":
-        # Country comparison controls
         st.markdown("### Compare MBTI Distributions Between Countries")
-        
+
         col1, col2 = st.columns([3, 1])
-        
+
         with col1:
-            # Multi-select for countries
             default_countries = ["United States", "Japan", "Global Average"]
             available_countries = ["Global Average"] + sorted(df['country'].unique())
-            
+
             selected_countries = st.multiselect(
                 "Select countries to compare:",
                 available_countries,
                 default=default_countries
             )
-        
+
         with col2:
-            # Select comparison type
             comparison_type = st.selectbox(
                 "Comparison Type:",
                 ["Temperament", "Type Distribution", "Personality Traits"],
                 index=0
             )
-            
-            # Convert to parameter
+
             feature_type = comparison_type.lower().replace(" ", "_")
-        
-        # Show comparison if countries selected
+
         if selected_countries:
             comparison_fig = create_country_comparison(df, selected_countries, feature_type)
             st.plotly_chart(comparison_fig, use_container_width=True)
-            
-            # Add explanation text
+
             if feature_type == 'temperament':
                 st.markdown("""
                 ### About Temperaments
-                
+
                 Temperaments are broader categories that group the 16 MBTI types based on shared characteristics:
                 """)
-                
+
                 for temp, desc in temperament_descriptions.items():
-                    st.markdown(f"<div style='margin-bottom: 10px; padding-left: 10px; border-left: 4px solid {temperament_colors[temp]};'>", unsafe_allow_html=True)
+                    st.markdown(
+                        f"<div style='margin-bottom: 10px; padding-left: 10px; border-left: 4px solid {temperament_colors[temp]};'>",
+                        unsafe_allow_html=True)
                     st.markdown(desc, unsafe_allow_html=True)
                     st.markdown("</div>", unsafe_allow_html=True)
-            
+
             elif feature_type == 'personality_traits':
                 st.markdown("""
                 ### About Personality Traits
-                
+
                 This radar chart shows the relative distribution of the four dichotomies in MBTI:
-                
+
                 - **Extraversion (E)** vs **Introversion (I)**: Where you focus your attention and get energy
                 - **Intuition (N)** vs **Sensing (S)**: How you take in information and what you pay attention to
                 - **Thinking (T)** vs **Feeling (F)**: How you make decisions
                 - **Judging (J)** vs **Perceiving (P)**: How you organize your world
-                
+
                 Higher percentages indicate a stronger presence of that trait in the population.
                 """)
         else:
             st.info("Please select at least one country to compare")
-    
+
     elif analysis_type == "Correlation Analysis":
-        # Correlation analysis controls
         st.markdown("### Correlation Analysis")
-        
+
         correlation_type = st.radio(
             "Select correlation level:",
             ["Temperament Groups", "Individual MBTI Types"],
             horizontal=True
         )
-        
-        # Convert to parameter
+
         corr_type = 'temperament' if correlation_type == "Temperament Groups" else 'type'
-        
-        # Create correlation visualization
+
         corr_fig = create_correlation_analysis(df, corr_type)
         st.plotly_chart(corr_fig, use_container_width=True)
-        
-        # Add explanation
+
         st.markdown("""
         ### Understanding Correlations
-        
+
         This heatmap shows the correlation between different personality types or temperaments across countries:
-        
+
         - **Positive values (blue)** indicate that when one type is common in a country, the other tends to be common too
         - **Negative values (red)** indicate that when one type is common, the other tends to be rare
         - **Values close to zero** indicate little or no relationship
-        
+
         Strong correlations may suggest underlying cultural or environmental factors that influence personality distributions.
         """)
-    
-    else:  # Regional Trends
-        # Regional analysis
+
+    else:
         st.markdown("### Regional Trends in MBTI Distribution")
-        
-        # Create regional analysis visualization
+
         region_fig = create_regional_analysis(df)
         st.plotly_chart(region_fig, use_container_width=True)
-        
-        # Add explanation
+
         st.markdown("""
         ### Regional Patterns
-        
+
         This chart shows how personality temperaments vary by geographic region. Some observations:
-        
+
         - **North America and Europe** tend to have higher percentages of Intuitive types (NT and NF)
         - **East Asia** shows a preference for SJ temperaments (Guardians) 
         - **Latin America** has relatively higher proportions of SP and NF temperaments
-        
+
         These variations may reflect cultural values, educational systems, and social norms that differ between regions.
-        
+
         *Note: The number of countries (n) in each region is shown above each group of bars.*
         """)
-    
+
     st.markdown("</div>", unsafe_allow_html=True)
 
-# For testing the tab independently
+
 if __name__ == "__main__":
     show_analysis_tab()

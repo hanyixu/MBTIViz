@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import os
 import sys
 from show_nlp_data import show_nlp_data
@@ -28,12 +29,12 @@ st.set_page_config(
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
+
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
         color: #333;
     }
-    
+
     .main-title {
         font-size: 2.5rem;
         font-weight: 700;
@@ -42,7 +43,7 @@ st.markdown("""
         margin-bottom: 0;
         padding-top: 1rem;
     }
-    
+
     .subtitle {
         font-size: 1.2rem;
         color: #656565;
@@ -51,65 +52,133 @@ st.markdown("""
         margin-bottom: 2rem;
         font-weight: 400;
     }
-    
-    .team-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #4B5563;
-        margin-bottom: 1rem;
-        text-align: center;
-    }
-    
-    .team-members-container {
-        display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
-        width: 100%;
-        background-color: #f8f9fa; /* Match the team-section background */
-    }
-
-    .team-member {
-        text-align: center;
-        padding: 15px;
-        flex: 1;
-        min-width: 150px;
-    }
-    
-    .footer {
-        text-align: center;
-        padding: 20px 0;
-        color: #666;
-        font-size: 0.9rem;
-        border-top: 1px solid #eee;
-        margin-top: 30px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # Main header
 st.markdown("<h1 class='main-title'>MBTI Personality Data Visualization</h1>", unsafe_allow_html=True)
-st.markdown("<p class='subtitle'>Exploring how personality types vary across people, cultures and countries</p>", unsafe_allow_html=True)
+st.markdown("<p class='subtitle'>Exploring how personality types vary across people, cultures and countries</p>",
+            unsafe_allow_html=True)
 
-# Team information
-st.markdown("<h2 class='team-title'>Team Members</h2>", unsafe_allow_html=True)
+# Display team on the left, animation on the right
+col1, col2 = st.columns([1, 2])  # Adjust width ratio as needed
 
-st.markdown("""
-<div class='team-members-container'>
-    <div class='team-member'>
-        <h3>Burui Chen</h3>
+with col1:
+    st.markdown("<h2 class='team-title'>Team Members</h2>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class='team-members-container'>
+        <div class='team-member'>
+            <h3>Burui Chen</h3>
+        </div>
+        <div class='team-member'>
+            <h3>Hanyi Xu</h3>
+        </div>
+        <div class='team-member'>
+            <h3>Min Zhuang</h3>
+        </div>
+        <div class='team-member'>
+            <h3>Xiaorong Yu</h3>
+        </div>
     </div>
-    <div class='team-member'>
-        <h3>Hanyi Xu</h3>
-    </div>
-    <div class='team-member'>
-        <h3>Min Zhuang</h3>
-    </div>
-    <div class='team-member'>
-        <h3>Xiaorong Yu</h3>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
+with col2:
+    components.html("""
+    <div class="container" style="position: relative; width: 400px; height: 400px; margin: 0 auto;">
+      <div class="center" style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 60px;
+          height: 60px;
+          font-size: 18px;
+          font-weight: bold;
+          text-align: center;
+          line-height: 60px;
+          border-radius: 50%;
+          background: #333;
+          color: #fff;
+          z-index: 2;
+      ">MBTI</div>
+      <div class="orbit" id="orbit" style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+      "></div>
+    </div>
+
+    <script>
+    const mbtiTypes = [
+      'ESFP', 'ESTP', 'ESFJ', 'ENFP', 'ENFJ', 'ESTJ', 'ENTP', 'ENTJ',
+      'ISTP', 'ISFP', 'ISTJ', 'ISFJ', 'INTP', 'INTJ', 'INFP', 'INFJ'
+    ];
+
+    const orbit = document.getElementById('orbit');
+
+    mbtiTypes.forEach((type, index) => {
+      const el = document.createElement('div');
+      el.className = 'type';
+      el.textContent = type;
+
+      const colorMap = {
+        Analysts: ['INTJ','INTP','ENTJ','ENTP'],
+        Diplomats: ['INFJ','INFP','ENFJ','ENFP'],
+        Sentinels: ['ISTJ','ISFJ','ESTJ','ESFJ'],
+        Explorers: ['ISTP','ISFP','ESTP','ESFP']
+      };
+
+      let bgColor = '#3498db';
+      if (colorMap.Analysts.includes(type)) bgColor = '#8e44ad';
+      else if (colorMap.Diplomats.includes(type)) bgColor = '#27ae60';
+      else if (colorMap.Sentinels.includes(type)) bgColor = '#2980b9';
+      else if (colorMap.Explorers.includes(type)) bgColor = '#f1c40f';
+
+      el.style.cssText = `
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        color: white;
+        text-align: center;
+        line-height: 30px;
+        font-size: 10px;
+        font-weight: bold;
+        background-color: ${bgColor};
+        animation: rotate${index} ${8 + index}s linear infinite;
+      `;
+
+      orbit.appendChild(el);
+
+      const baseRadius = 80;
+      const layer = Math.floor(index / 4);
+      const radius = baseRadius + layer * 25;
+      const angleOffset = (Math.PI / 2) / 5;
+      const angle = (index % 4) * (Math.PI / 2) + (index % 2 === 0 ? -angleOffset : angleOffset);
+
+      const keyframes = `
+        @keyframes rotate${index} {
+          from {
+            transform: rotate(0deg) translate(${radius * Math.cos(angle)}px, ${radius * Math.sin(angle)}px) rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg) translate(${radius * Math.cos(angle)}px, ${radius * Math.sin(angle)}px) rotate(-360deg);
+          }
+        }
+      `;
+
+      const styleSheet = document.styleSheets[0];
+      if (styleSheet) {
+        styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+      } else {
+        const style = document.createElement('style');
+        style.innerHTML = keyframes;
+        document.head.appendChild(style);
+      }
+    });
+    </script>
+    """, height=450)
 
 # Project description
 st.markdown("## Project Overview")
@@ -133,45 +202,40 @@ across the globe.
 """)
 
 # Create tabs
-tab1, tab2, tab3, tab4 = st.tabs(["🏠 Home", "🌍 World Map", "📊 World Data Analysis", "Word Cloud"])
+tab1, tab2, tab3, tab4 = st.tabs(["🏠 Home", "🌍 World Map", "📊 World Data Analysis", "☁️ Word Cloud"])
 
 with tab1:
     st.markdown("## Welcome to the MBTI World Distribution Dashboard")
     st.write("""
     This dashboard provides interactive visualizations of Myers-Briggs Type Indicator (MBTI) 
     personality distributions across different countries worldwide.
-    
+
     ### How to Use This Dashboard:
     1. Navigate through the tabs above to explore different visualizations
     2. Use the **World Map** tab to see global distributions of personality types
     3. Explore the **Data Analysis** tab for deeper insights and comparisons
-    
+
     The data in this dashboard is based on a comprehensive collection of self-reported MBTI test 
     results from 158 countries, allowing for a global comparison of personality traits.
     """)
-    
+
     # Sample key findings
     st.markdown("### Key Findings")
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.markdown("""
-        - **Regional Patterns**: Northern European countries show higher percentages of introverted intuitive types
-        - **Cultural Connections**: Related cultures often display similar personality distributions
-        - **Global Trends**: Some personality types have significantly higher representation worldwide
+        - **Regional Patterns**: Northern European countries show higher percentages of introverted intuitive types  
+        - **Cultural Connections**: Related cultures often display similar personality distributions  
+        - **Global Trends**: Some personality types have significantly higher representation worldwide  
         """)
-    
-    # with col2:
-    #     st.image("image/sample_viz.png", caption="Sample visualization")
 
 with tab2:
-    # Call the map tab function from the imported module
     show_map_tab()
-    
+
 with tab3:
-    # Call the analysis tab function from the imported module
     show_analysis_tab()
-    
+
 with tab4:
     show_nlp_data()
 

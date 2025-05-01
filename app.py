@@ -4,20 +4,15 @@ import os
 import sys
 from show_nlp_data import show_nlp_data
 
-# Add the current directory to the path so we can import from local modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Import data setup functionality
 from setup_data import setup_data_directory, verify_csv_structure
 
-# Setup data directory and ensure CSV files are in the right location
 setup_data_directory()
 
-# Import tab modules
 from map_tab import show_map_tab
 from analysis_tab import show_analysis_tab
 
-# Set page configuration
 st.set_page_config(
     page_title="MBTI Personality Distribution",
     page_icon="💡",
@@ -25,7 +20,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Apply custom CSS for styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -55,13 +49,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Main header
 st.markdown("<h1 class='main-title'>MBTI Personality Data Visualization</h1>", unsafe_allow_html=True)
 st.markdown("<p class='subtitle'>Exploring how personality types vary across people, cultures and countries</p>",
             unsafe_allow_html=True)
 
-# Display team on the left, animation on the right
-col1, col2 = st.columns([1, 2])  # Adjust width ratio as needed
+col1, col2 = st.columns([1, 2])
 
 with col1:
     st.markdown("<h2 class='team-title'>Team Members</h2>", unsafe_allow_html=True)
@@ -180,7 +172,6 @@ with col2:
     </script>
     """, height=450)
 
-# Project description
 st.markdown("## Project Overview")
 st.write("""
 The Myers-Briggs Type Indicator (MBTI) is one of the most widely used personality assessments in the world, 
@@ -201,7 +192,6 @@ This interactive dashboard allows you to explore these questions and discover pa
 across the globe.
 """)
 
-# Create tabs
 tab1, tab2, tab3, tab4 = st.tabs(["🏠 Home", "🌍 World Map", "📊 World Data Analysis", "☁️ Word Cloud"])
 
 with tab1:
@@ -219,7 +209,45 @@ with tab1:
     results from 158 countries, allowing for a global comparison of personality traits.
     """)
 
-    # Sample key findings
+    st.write("""
+    The **Myers-Briggs Type Indicator (MBTI)** is a widely used personality framework that classifies individuals into 
+    **16 unique personality types** based on their preferences in four dimensions:
+
+    - **Extraversion (E) vs. Introversion (I)** – Where you focus your attention
+    - **Sensing (S) vs. Intuition (N)** – How you process information
+    - **Thinking (T) vs. Feeling (F)** – How you make decisions
+    - **Judging (J) vs. Perceiving (P)** – How you structure your life
+
+    You can explore your own MBTI type by taking a free test here:  
+    👉 [Take the MBTI Test](https://www.16personalities.com/free-personality-test)
+
+    ---
+
+    ### 🌟 MBTI Personality Types at a Glance:
+
+    - **ISTJ – The Logistician**: Responsible, serious, and detail-oriented.
+    - **ISFJ – The Defender**: Loyal, warm, and protective of others.
+    - **INFJ – The Advocate**: Insightful, creative, and idealistic.
+    - **INTJ – The Architect**: Strategic, logical, and independent.
+
+    - **ISTP – The Virtuoso**: Practical, adventurous, and analytical.
+    - **ISFP – The Adventurer**: Gentle, flexible, and artistic.
+    - **INFP – The Mediator**: Empathetic, deep, and imaginative.
+    - **INTP – The Logician**: Intellectual, curious, and abstract.
+
+    - **ESTP – The Entrepreneur**: Energetic, action-oriented, and bold.
+    - **ESFP – The Entertainer**: Fun-loving, spontaneous, and sociable.
+    - **ENFP – The Campaigner**: Enthusiastic, expressive, and open-minded.
+    - **ENTP – The Debater**: Inventive, witty, and outspoken.
+
+    - **ESTJ – The Executive**: Organized, practical, and leadership-driven.
+    - **ESFJ – The Consul**: Caring, social, and harmony-focused.
+    - **ENFJ – The Protagonist**: Charismatic, inspiring, and supportive.
+    - **ENTJ – The Commander**: Assertive, strategic, and goal-oriented.
+
+    Each type offers unique strengths and preferences. This dashboard explores how these personality types are distributed globally.
+    """)
+
     st.markdown("### Key Findings")
     col1, col2 = st.columns(2)
 
@@ -239,7 +267,6 @@ with tab3:
 with tab4:
     show_nlp_data()
 
-# Footer
 st.markdown("<div class='footer'>", unsafe_allow_html=True)
 st.markdown("© 2025 Team_C_TBD | Columbia University | QMSS Program", unsafe_allow_html=True)
 st.markdown("A class project for QMSS GR 5063: Data Visualization", unsafe_allow_html=True)

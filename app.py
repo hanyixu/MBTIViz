@@ -84,24 +84,28 @@ st.markdown("""
 st.markdown("<h1 class='main-title'>MBTI Personality Data Visualization</h1>", unsafe_allow_html=True)
 st.markdown("<p class='subtitle'>Exploring how personality types vary across people, cultures and countries</p>", unsafe_allow_html=True)
 
-st.markdown("<h2 class='team-title'>Team Members</h2>", unsafe_allow_html=True)
 
-st.markdown("""
-<div class='team-members-container'>
-    <div class='team-member'>
-        <h3>Burui Chen</h3>
-    </div>
-    <div class='team-member'>
-        <h3>Hanyi Xu</h3>
-    </div>
-    <div class='team-member'>
-        <h3>Min Zhuang</h3>
-    </div>
-    <div class='team-member'>
-        <h3>Xiaorong Yu</h3>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+col1, col2 = st.columns(2)
+
+with col1:
+  st.markdown("<h2 class='team-title'>Team Members</h2>", unsafe_allow_html=True)
+
+  st.markdown("""
+  <div class='team-members-container'>
+      <div class='team-member'>
+          <h3>Burui Chen</h3>
+      </div>
+      <div class='team-member'>
+          <h3>Hanyi Xu</h3>
+      </div>
+      <div class='team-member'>
+          <h3>Min Zhuang</h3>
+      </div>
+      <div class='team-member'>
+          <h3>Xiaorong Yu</h3>
+      </div>
+  </div>
+  """, unsafe_allow_html=True)
 
 
 st.markdown("## Project Overview")
@@ -123,7 +127,9 @@ we aim to uncover insights about personality diversity around the world.
     This interactive dashboard allows you to explore these questions and discover patterns in personality distribution 
     across the globe.
     """)
-with col_right:
+
+
+with col2:
     import streamlit.components.v1 as components
     components.html('''
 <!DOCTYPE html>

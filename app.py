@@ -120,9 +120,150 @@ we aim to uncover insights about personality diversity around the world.
 - Are there correlations between cultural factors and personality trends?
 - What is the global distribution of the four temperament groups (NF, NT, SP, SJ)?
 
-This interactive dashboard allows you to explore these questions and discover patterns in personality distribution 
-across the globe.
-""")
+    This interactive dashboard allows you to explore these questions and discover patterns in personality distribution 
+    across the globe.
+    """)
+with col_right:
+    import streamlit.components.v1 as components
+    components.html('''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MBTI Orbit Animation</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #fff;
+    }
+    .container {
+      position: relative;
+      width: 800px;
+      height: 800px;
+    }
+    .center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      font-size: 32px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 100px;
+      border-radius: 50%;
+      background: #333;
+      color: #fff;
+      z-index: 2;
+    }
+    .orbit {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .type {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      color: white;
+      text-align: center;
+      line-height: 50px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="center">MBTI</div>
+    <div class="orbit" id="orbit"></div>
+  </div>
+  <script>
+    const mbtiTypes = [
+      'ESFP', 'ESTP', 'ESFJ', 'ENFP', 'ENFJ', 'ESTJ', 'ENTP', 'ENTJ',
+      'ISTP', 'ISFP', 'ISTJ', 'ISFJ', 'INTP', 'INTJ', 'INFP', 'INFJ'
+    ];
+
+    const orbit = document.getElementById('orbit');
+
+    mbtiTypes.forEach((type, index) => {
+      const el = document.createElement('div');
+      el.className = 'type';
+      el.textContent = type;
+
+      // 配色按四大类
+      const colorMap = {
+        Analysts: ['INTJ','INTP','ENTJ','ENTP'],
+        Diplomats: ['INFJ','INFP','ENFJ','ENFP'],
+        Sentinels: ['ISTJ','ISFJ','ESTJ','ESFJ'],
+        Explorers: ['ISTP','ISFP','ESTP','ESFP']
+      };
+      let bgColor = '#3498db';
+      if (colorMap.Analysts.includes(type)) bgColor = '#8e44ad';
+      else if (colorMap.Diplomats.includes(type)) bgColor = '#27ae60';
+      else if (colorMap.Sentinels.includes(type)) bgColor = '#2980b9';
+      else if (colorMap.Explorers.includes(type)) bgColor = '#f1c40f';
+      el.style.backgroundColor = bgColor;
+
+      orbit.appendChild(el);
+
+      // 轨道半径分层，每个 MBTI 类型有不同半径
+      const baseRadius = 150;
+      const layer = Math.floor(index / 4);
+      const radius = baseRadius + layer * 50;
+      const angleOffset = (Math.PI / 2) / 5;
+      const angle = (index % 4) * (Math.PI / 2) + (index % 2 === 0 ? -angleOffset : angleOffset);
+
+      // 精确控制速度：外向快，内向慢
+      const speedMap = {
+        'ESFP': 1,
+        'ESTP': 2,
+        'ESFJ': 3,
+        'ENFP': 4,
+        'ENFJ': 5,
+        'ESTJ': 6,
+        'ENTP': 7,
+        'ENTJ': 8,
+        'ISTP': 9,
+        'ISFP': 10,
+        'ISTJ': 11,
+        'ISFJ': 12,
+        'INTP': 13,
+        'INTJ': 14,
+        'INFP': 15,
+        'INFJ': 16,
+      };
+
+      const duration = speedMap[type] || 20;
+      el.style.animation = `rotate${index} ${duration}s linear infinite`;
+
+      const keyframes = `
+        @keyframes rotate${index} {
+          from {
+            transform: rotate(0deg) translate(${radius * Math.cos(angle)}px, ${radius * Math.sin(angle)}px) rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg) translate(${radius * Math.cos(angle)}px, ${radius * Math.sin(angle)}px) rotate(-360deg);
+          }
+        }
+      `;
+
+      const styleSheet = document.styleSheets[0];
+      styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+    });
+  </script>
+</body>
+</html>
+
+    ''', height=340)
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏠 Home", "🌍 World Map", "📊 World Data Analysis", "☁️ Word Cloud", "📈 Playground"])
 
@@ -139,6 +280,39 @@ with tab1:
     
     The data in this dashboard is based on a comprehensive collection of self-reported MBTI test 
     results from 158 countries, allowing for a global comparison of personality traits.
+    """)
+    
+    # Add MBTI explanation if not already present
+    st.markdown("""
+    The **Myers-Briggs Type Indicator (MBTI)** is a widely used personality framework that classifies individuals into **16 unique personality types** based on their preferences in four dimensions:
+    - **Extraversion (E) vs. Introversion (I)** – Where you focus your attention
+    - **Sensing (S) vs. Intuition (N)** – How you process information
+    - **Thinking (T) vs. Feeling (F)** – How you make decisions
+    - **Judging (J) vs. Perceiving (P)** – How you structure your life
+    
+    You can explore your own MBTI type by taking a free test here:
+    👉 [Take the MBTI Test](https://www.16personalities.com/free-personality-test)
+    """)
+    
+    # MBTI Types at a Glance
+    st.markdown("""
+    ### 🌟 MBTI Personality Types at a Glance:
+    - **ISTJ – The Logistician**: Responsible, serious, and detail-oriented.
+    - **ISFJ – The Defender**: Loyal, warm, and protective of others.
+    - **INFJ – The Advocate**: Insightful, creative, and idealistic.
+    - **INTJ – The Architect**: Strategic, logical, and independent.
+    - **ISTP – The Virtuoso**: Practical, adventurous, and analytical.
+    - **ISFP – The Adventurer**: Gentle, flexible, and artistic.
+    - **INFP – The Mediator**: Empathetic, deep, and imaginative.
+    - **INTP – The Logician**: Intellectual, curious, and abstract.
+    - **ESTP – The Entrepreneur**: Energetic, action-oriented, and bold.
+    - **ESFP – The Entertainer**: Fun-loving, spontaneous, and sociable.
+    - **ENFP – The Campaigner**: Enthusiastic, expressive, and open-minded.
+    - **ENTP – The Debater**: Inventive, witty, and outspoken.
+    - **ESTJ – The Executive**: Organized, practical, and leadership-driven.
+    - **ESFJ – The Consul**: Caring, social, and harmony-focused.
+    - **ENFJ – The Protagonist**: Charismatic, inspiring, and supportive.
+    - **ENTJ – The Commander**: Assertive, strategic, and goal-oriented.
     """)
     
     st.markdown("### Key Findings")
